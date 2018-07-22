@@ -5,6 +5,7 @@
 # TODO Change hyper-parameters according to the traits of the dataset
 # TODO Search wider range of parameters if the best one is on the margin
 from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.ensemble import GradientBoostingRegressor
 import numpy as np
 from scipy import sparse
 from sklearn.model_selection import cross_val_score
@@ -15,26 +16,40 @@ np.random.seed(1024)
 
 class GBDT_tuning:
 
-	def __init__(self, X, y, cv=5, n_jobs=30, random_state=2018):
+	def __init__(self, X, y, cv=5, n_jobs=30, random_state=2018, model_type='classification', scoring='accuracy'):
 		self.X = X
 		self.y = y
 		self.cv = cv
 		self.n_jobs = n_jobs
 		self.random_state = random_state
+		self.model_type = model_type
+		self.scoring = scoring
 
 	def gridsearch(self, param_grid):
-		gsearch = GridSearchCV(estimator=GradientBoostingClassifier(learning_rate=0.1, min_samples_split=1000,
-                                min_samples_leaf=20, max_features='sqrt', subsample=0.8, random_state=self.random_state), 
-                       			param_grid=param_grid, scoring='accuracy', cv=self.cv, n_jobs = self.n_jobs, 
-                       			verbose=2)
+		if(self.model_type == 'classification' or self.model_type == 'clf'):
+			estimator = GradientBoostingClassifier(learning_rate=0.1, min_samples_split=1000,
+                                				   min_samples_leaf=20, max_features='sqrt', subsample=0.8, random_state=self.random_state)
+		elif(self.model_type == 'regression' or self.model_type == 'reg'):
+			estimator = GradientBoostingRegressor(learning_rate=0.1, min_samples_split=1000,
+                                				  min_samples_leaf=20, max_features='sqrt', subsample=0.8, random_state=self.random_state)
+
+		gsearch = GridSearchCV(estimator=estimator, 
+                       		   param_grid=param_grid, scoring=self.scoring, cv=self.cv, n_jobs = self.n_jobs, 
+                       		   verbose=2)
 		gsearch.fit(self.X, self.y)
 		return gsearch.grid_scores_, gsearch.best_params_, gsearch.best_score_
 
 	def randomsearch(self, param_distributions):
-		gsearch1 = RandomizedSearchCV(estimator=GradientBoostingClassifier(learning_rate=0.1, min_samples_split=1000,
-                                min_samples_leaf=20, max_features='sqrt', subsample=0.8, random_state=self.random_state), 
-                       			param_distributions=param_distributions, scoring='accuracy', cv=self.cv, n_jobs = self.n_jobs, 
-                       			n_iter=20, verbose=2)
+		if(self.model_type == 'classification' or self.model_type == 'clf'):
+			estimator = GradientBoostingClassifier(learning_rate=0.1, min_samples_split=1000,
+                                				   min_samples_leaf=20, max_features='sqrt', subsample=0.8, random_state=self.random_state)
+		elif(self.model_type == 'regression' or self.model_type == 'reg'):
+			estimator = GradientBoostingRegressor(learning_rate=0.1, min_samples_split=1000,
+                                				  min_samples_leaf=20, max_features='sqrt', subsample=0.8, random_state=self.random_state)
+
+		rsearch = RandomizedSearchCV(estimator=estimator, 
+                       				  param_distributions=param_distributions, scoring=self.scoring, cv=self.cv, n_jobs = self.n_jobs, 
+                       				  n_iter=20, verbose=2)
 		rsearch.fit(self.X, self.y)
 		return rsearch.grid_scores_, rsearch.best_params_, rsearch.best_score_
 
