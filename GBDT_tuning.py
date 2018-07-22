@@ -2,7 +2,7 @@
 # Date: 2018/6/27
 # A tool for GBDT hyper-parameter fine-tuning
 # Also as an implementation of https://www.analyticsvidhya.com/blog/2016/02/complete-guide-parameter-tuning-gradient-boosting-gbm-python/
-
+# TODO Change hyper-parameters according to the traits of the dataset
 from sklearn.ensemble import GradientBoostingClassifier
 import numpy as np
 from scipy import sparse
