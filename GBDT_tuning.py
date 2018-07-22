@@ -1,6 +1,7 @@
 # Author: Xu Yizhi <yzxu@zju.edu.cn>
 # Date: 2018/6/27
 # A tool for GBDT hyper-parameter fine-tuning
+# Also as an implementation of https://www.analyticsvidhya.com/blog/2016/02/complete-guide-parameter-tuning-gradient-boosting-gbm-python/
 
 from sklearn.ensemble import GradientBoostingClassifier
 import numpy as np
@@ -36,53 +37,51 @@ class GBDT_tuning:
 		rsearch.fit(self.X, self.y)
 		return rsearch.grid_scores_, rsearch.best_params_, rsearch.best_score_
 
-	def step0(self, search_type, params):
-		params['n_estimators'] = list(np.arange(100, 1001, 100))
-		params['learning_rate'] = [0.01, 0.02, 0.05, 0.1]
-
+	def search(self, search_type, params):
 		if(search_type == 'grid'):
 			return self.gridsearch(params)
 		elif(search_type == 'random'):
 			return self.randomsearch(params)
+
+	def step0(self, search_type, params):
+		params['n_estimators'] = list(np.arange(20, 71, 10))
+		params['learning_rate'] = [0.05, 0.1, 0.2]
+
+		return self.search(search_type, params)
 
 	def step1(self, search_type, params):
-		params['max_depth'] = range(3, 11, 1)
-		params['min_samples_split'] = (len(self.y)/np.arange(10, 310, 30)).astype(int)
+		params['max_depth'] = range(5, 15, 2)
+		params['min_samples_split'] = (len(self.y)*np.arange(0.002, 0.01, 0.002)).astype(int)
 
-		if(search_type == 'grid'):
-			return self.gridsearch(params)
-		elif(search_type == 'random'):
-			return self.randomsearch(params)
+		return self.search(search_type, params)
 
 	def step2(self, search_type, params):
-		params['min_samples_leaf'] = (len(self.y)/np.arange(100, 3100, 300)).astype(int)
-		params['min_samples_split'] = (len(self.y)/np.arange(10, 310, 30)).astype(int)
+		params['min_samples_split'] = (len(self.y)*np.arange(0.01, 0.02, 0.002)).astype(int)
+		params['min_samples_split'] = (len(self.y)/np.arange(30, 71, 10)).astype(int)
 
-		if(search_type == 'grid'):
-			return self.gridsearch(params)
-		elif(search_type == 'random'):
-			return self.randomsearch(params)
+		return self.search(search_type, params)
 
 	def step3(self, search_type, params):
-		params['subsample'] = [0.6, 0.7, 0.8 ,0.9, 1]
-
-		if(search_type == 'grid'):
-			return self.gridsearch(params)
-		elif(search_type == 'random'):
-			return self.randomsearch(params)
-
-	def step4(self, search_type, params):
 		params['max_features'] = (np.array([0.25, 0.5, 1, 1.5, 2])*np.sqrt(len(self.X[0]))).astype(int)
 
-		if(search_type == 'grid'):
-			return self.gridsearch(params)
-		elif(search_type == 'random'):
-			return self.randomsearch(params)
+		return self.search(search_type, params)
+
+	def step4(self, search_type, params):
+		params['subsample'] = [0.6, 0.7, 0.75, 0.8, 0.85, 0.9]
+
+		return self.search(search_type, params)
+
+	def step5(self, search_type, params):
+		params['n_estimators'] = list(params['n_estimators'][0] * np.array([2, 10, 20]))
+		params['learning_rate'] = list(params['learning_rate'][0] * np.array([0.5, 0.1, 0.05]))
+
+		return self.search(search_type, params)
 
 	def tune(self):
+		steps = 6
 		start_time = time.time()
 		params = dict()
-		for i in range(5):
+		for i in range(steps):
 			_0, best_params_, best_scores_ = eval('self.step%d(\'grid\', params)'%(i))
 			for key, value in best_params_.items():
 				if(type(value) == str):
