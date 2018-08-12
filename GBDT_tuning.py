@@ -37,7 +37,7 @@ class GBDT_tuning:
                        		   param_grid=param_grid, scoring=self.scoring, cv=self.cv, n_jobs = self.n_jobs, 
                        		   refit='accuracy', verbose=2)
 		gsearch.fit(self.X, self.y)
-		return gsearch.best_params_, gsearch.best_score_, np.array(gsearch.cv_results_['mean_test_roc_auc']).mean(), np.array(gsearch.cv_results_['mean_test_f1']).mean()
+		return gsearch.best_params_, gsearch.best_score_, np.array(gsearch.cv_results_['mean_test_roc_auc'][gsearch.best_index_]).mean(), np.array(gsearch.cv_results_['mean_test_f1'][gsearch.best_index_]).mean()
 
 	def randomsearch(self, param_distributions):
 		if(self.model_type == 'classification' or self.model_type == 'clf'):
@@ -51,7 +51,7 @@ class GBDT_tuning:
                        				  param_distributions=param_distributions, scoring=self.scoring, cv=self.cv, n_jobs = self.n_jobs, 
                        				  n_iter=20, verbose=2)
 		rsearch.fit(self.X, self.y)
-		return rsearch.best_params_, rsearch.best_score_
+		return rsearch.best_params_, rsearch.best_score_, np.array(gsearch.cv_results_['mean_test_roc_auc'][gsearch.best_index_]).mean(), np.array(gsearch.cv_results_['mean_test_f1'][gsearch.best_index_]).mean()
 
 	def search(self, search_type, params):
 		if(search_type == 'grid'):
